@@ -69,7 +69,9 @@ You need to pass an argument to this option to specify the name that your module
     .describe("quotes", "Quote style (0 - auto, 1 - single, 2 - double, 3 - original)")
     .describe("reserved-file", "File containing reserved names")
     .describe("reserve-domprops", "Make (most?) DOM properties reserved for --mangle-props")
-    .describe("mangle-props", "Mangle property names")
+    .describe("mangle-props", "Mangle property names. \
+Pass options like --mangle-props index_access=false,dot_access=true. \
+Use --mangle-props with no argument to use the default compression options.")
     .describe("mangle-regex", "Only mangle property names matching the regex")
     .describe("name-cache", "File to hold mangled names mappings")
     .describe("pure-funcs", "List of functions that can be safely removed if their return value is not used")
@@ -94,6 +96,7 @@ You need to pass an argument to this option to specify the name that your module
     .string("beautify")
     .string("m")
     .string("mangle")
+    .string("mangle-props")
     .string("c")
     .string("compress")
     .string("d")
@@ -105,6 +108,7 @@ You need to pass an argument to this option to specify the name that your module
     .string("p")
     .string("prefix")
     .string("name-cache")
+
     .array("reserved-file")
     .array("pure-funcs")
 
@@ -125,7 +129,6 @@ You need to pass an argument to this option to specify the name that your module
     .boolean("noerr")
     .boolean("bare-returns")
     .boolean("keep-fnames")
-    .boolean("mangle-props")
     .boolean("reserve-domprops")
 
     .wrap(80)
@@ -164,6 +167,7 @@ if (ARGS.acorn) {
 
 var COMPRESS = getOptions("c", true);
 var MANGLE = getOptions("m", true);
+var MANGLE_PROPS = getOptions("mangle_props", true);
 var BEAUTIFY = getOptions("b", true);
 var RESERVED = null;
 
@@ -388,10 +392,11 @@ async.eachLimit(files, 1, function (file, cb) {
         TOPLEVEL = TOPLEVEL.wrap_enclose(arg_parameter_list);
     }
 
-    if (ARGS.mangle_props || ARGS.name_cache) (function(){
+    if (MANGLE_PROPS || ARGS.name_cache) (function(){
         var reserved = RESERVED ? RESERVED.props : null;
         var cache = readNameCache("props");
         var regex;
+        var options;
 
         try {
           regex = ARGS.mangle_regex ? extractRegex(ARGS.mangle_regex) : null;
@@ -400,12 +405,16 @@ async.eachLimit(files, 1, function (file, cb) {
             process.exit(1);
         }
 
-        TOPLEVEL = UglifyJS.mangle_properties(TOPLEVEL, {
+        options = {
             reserved   : reserved,
             cache      : cache,
-            only_cache : !ARGS.mangle_props,
+            only_cache : !MANGLE_PROPS,
             regex      : regex
-        });
+        }
+
+        UglifyJS.merge(options, MANGLE_PROPS)
+
+        TOPLEVEL = UglifyJS.mangle_properties(TOPLEVEL, options);
         writeNameCache("props", cache);
     })();
 

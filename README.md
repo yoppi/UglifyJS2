@@ -227,6 +227,18 @@ console.log(x.something());
 In the above code, `foo`, `bar`, `baz`, `moo` and `boo` will be replaced
 with single characters, while `something()` will be left as is.
 
+Additionally `mangle-props` take a comma-separated list of options. Options
+are in the form `index_access=true`, or just `index_access`.
+It is specify the method of property access.
+
+- `index_access` -- mangle or not index property access like `obj["propertyName"]`
+
+- `dot_access` -- mangle or not dot property access like `obj.propertyName`
+
+If `--mangle-props index_access=false` is specified, in the above example code,
+`bar` will be replaced, while `baz`, `moo`, `boo` and `something()` will be
+left as is.
+
 In order for this to be of any use, we should avoid mangling standard JS
 names.  For instance, if your code would contain `x.length = 10`, then
 `length` becomes a candidate for mangling and it will be mangled throughout
